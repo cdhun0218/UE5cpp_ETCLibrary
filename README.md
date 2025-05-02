@@ -10,4 +10,4 @@ It has been prepared as of 5.3
   Header and cpp renaming seem necessary
 
 2.CombineHangeulComp
-  Library for entering Korean alphabet in Unreal
+  Library for entering Korean 3DKeyboard in Unreal
