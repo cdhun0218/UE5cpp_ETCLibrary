@@ -19,22 +19,22 @@
 
 UStaticMesh* ULIB_Export::ConvertProcToStaticMesh(FProcMeshData MeshData, const bool RecalculateNormal)
 {
-    // 1. À¯È¿¼º °Ë»ç Ãß°¡
+    // 1. ìœ íš¨ì„± ê²€ì‚¬ ì¶”ê°€
     if (MeshData.Vertices.Num() == 0 || MeshData.Triangles.Num() % 3 != 0)
         return nullptr;
 
-    // UV0°¡ ¾ø´Â °æ¿ì UV¸¦ ÀÚµ¿ »ı¼º
+    // UV0ê°€ ì—†ëŠ” ê²½ìš° UVë¥¼ ìë™ ìƒì„±
     if (MeshData.UV0.Num() == 0)
     {
         MeshData.UV0.SetNum(MeshData.Vertices.Num());
         for (int32 i = 0; i < MeshData.Vertices.Num(); i++)
         {
             const FVector& Vert = MeshData.Vertices[i];
-            MeshData.UV0[i] = FVector2D(Vert.X, Vert.Y); // °£´ÜÇÑ Æò¸é Åõ¿µ
+            MeshData.UV0[i] = FVector2D(Vert.X, Vert.Y); // ê°„ë‹¨í•œ í‰ë©´ íˆ¬ì˜
         }
     }
 
-    // RecalculateNormal ÀÌ trueÀÏ¶§  Normals¸¦ ÀÚµ¿ »ı¼º
+    // RecalculateNormal ì´ trueì¼ë•Œ  Normalsë¥¼ ìë™ ìƒì„±
     if (RecalculateNormal)
     {
         MeshData.Normals.SetNum(MeshData.Vertices.Num());
@@ -57,18 +57,18 @@ UStaticMesh* ULIB_Export::ConvertProcToStaticMesh(FProcMeshData MeshData, const 
         }
     }
 
-    // 2. ½ºÅÂÆ½ ¸Ş½Ã »ı¼º
+    // 2. ìŠ¤íƒœí‹± ë©”ì‹œ ìƒì„±
     UStaticMesh* StaticMesh = NewObject<UStaticMesh>(GetTransientPackage(), NAME_None, RF_Transient);
 
-    // Áß¿ä: ·»´õ ¸®¼Ò½º¸¦ ¿Ã¹Ù¸£°Ô ÃÊ±âÈ­
-    StaticMesh->ReleaseResources();  // ±âÁ¸ ¸®¼Ò½º Á¦°Å
-    StaticMesh->InitResources();     // »õ ¸®¼Ò½º ÃÊ±âÈ­
+    // ì¤‘ìš”: ë Œë” ë¦¬ì†ŒìŠ¤ë¥¼ ì˜¬ë°”ë¥´ê²Œ ì´ˆê¸°í™”
+    StaticMesh->ReleaseResources();  // ê¸°ì¡´ ë¦¬ì†ŒìŠ¤ ì œê±°
+    StaticMesh->InitResources();     // ìƒˆ ë¦¬ì†ŒìŠ¤ ì´ˆê¸°í™”
 
     FMeshDescription MeshDesc;
     FStaticMeshAttributes Attributes(MeshDesc);
     Attributes.Register();
     
-    // 3. Á¤Á¡ »ı¼º
+    // 3. ì •ì  ìƒì„±
     TArray<FVertexID> VertexIDs;
     for (const FVector& Vert : MeshData.Vertices)
     {
@@ -77,32 +77,32 @@ UStaticMesh* ULIB_Export::ConvertProcToStaticMesh(FProcMeshData MeshData, const 
         VertexIDs.Add(Vid);
     }
 
-    // 4. Æú¸®°ï ±×·ì ¹× UV Ã¤³Î ¼³Á¤
+    // 4. í´ë¦¬ê³¤ ê·¸ë£¹ ë° UV ì±„ë„ ì„¤ì •
     FPolygonGroupID Pgid = MeshDesc.CreatePolygonGroup();
     const int32 NumUvChannels = 1;
     Attributes.GetVertexInstanceUVs().SetNumChannels(NumUvChannels);
 
-    // 5. »ï°¢Çü ¹× Á¤Á¡ ÀÎ½ºÅÏ½º »ı¼º
+    // 5. ì‚¼ê°í˜• ë° ì •ì  ì¸ìŠ¤í„´ìŠ¤ ìƒì„±
     for (int32 i = 0; i < MeshData.Triangles.Num(); i += 3)
     {
-        // »ï°¢ÇüÀ» ±¸¼ºÇÏ´Â ¼¼ °³ÀÇ ÀÎµ¦½º¸¦ ¸ÕÀú ÃßÃâ
+        // ì‚¼ê°í˜•ì„ êµ¬ì„±í•˜ëŠ” ì„¸ ê°œì˜ ì¸ë±ìŠ¤ë¥¼ ë¨¼ì € ì¶”ì¶œ
         const int32 Index0 = MeshData.Triangles[i];
         const int32 Index1 = MeshData.Triangles[i + 1];
         const int32 Index2 = MeshData.Triangles[i + 2];
 
-        // ¸ğµç Á¤Á¡ ÀÎµ¦½º°¡ À¯È¿ÇÑÁö È®ÀÎ
+        // ëª¨ë“  ì •ì  ì¸ë±ìŠ¤ê°€ ìœ íš¨í•œì§€ í™•ì¸
         if (!VertexIDs.IsValidIndex(Index0) || !VertexIDs.IsValidIndex(Index1) || !VertexIDs.IsValidIndex(Index2))
         {
-            // À¯È¿ÇÏÁö ¾ÊÀº ÀÎµ¦½º°¡ ÀÖÀ¸¸é ÇØ´ç »ï°¢Çü ÀüÃ¼¸¦ °Ç³Ê¶Ù±â
+            // ìœ íš¨í•˜ì§€ ì•Šì€ ì¸ë±ìŠ¤ê°€ ìˆìœ¼ë©´ í•´ë‹¹ ì‚¼ê°í˜• ì „ì²´ë¥¼ ê±´ë„ˆë›°ê¸°
             continue;
         }
 
-        // À¯È¿ÇÑ °æ¿ì, Á¤Á¡ ÀÎ½ºÅÏ½º¸¦ »ı¼ºÇÏ¿© ÀúÀå
+        // ìœ íš¨í•œ ê²½ìš°, ì •ì  ì¸ìŠ¤í„´ìŠ¤ë¥¼ ìƒì„±í•˜ì—¬ ì €ì¥
         TArray<FVertexInstanceID> VertexInstances;
         const int32 Indices[3] = { Index0, Index1, Index2 };
 
 
-        // °¢ Á¤Á¡ ÀÎ½ºÅÏ½º¿¡ ¼Ó¼º ÇÒ´ç
+        // ê° ì •ì  ì¸ìŠ¤í„´ìŠ¤ì— ì†ì„± í• ë‹¹
         for (int32 j = 0; j < 3; j++)
         {
             const int32 VertIndex = Indices[j];
@@ -114,19 +114,19 @@ UStaticMesh* ULIB_Export::ConvertProcToStaticMesh(FProcMeshData MeshData, const 
 
             FVertexInstanceID InstanceID = MeshDesc.CreateVertexInstance(VertexIDs[VertIndex]);
 
-            // ¹ı¼± ¼³Á¤
+            // ë²•ì„  ì„¤ì •
             if (MeshData.Normals.IsValidIndex(VertIndex))
                 Attributes.GetVertexInstanceNormals()[InstanceID] = FVector3f(MeshData.Normals[VertIndex]);
 
-            // UV ¼³Á¤ (Ã¤³Î 0)
+            // UV ì„¤ì • (ì±„ë„ 0)
             if (MeshData.UV0.IsValidIndex(VertIndex))
                 Attributes.GetVertexInstanceUVs().Set(InstanceID, 0, FVector2f(MeshData.UV0[VertIndex]));
 
-            // ¹öÅØ½º ÄÃ·¯ ¼³Á¤
+            // ë²„í…ìŠ¤ ì»¬ëŸ¬ ì„¤ì •
             if (MeshData.VertexColors.IsValidIndex(VertIndex))
                 Attributes.GetVertexInstanceColors()[InstanceID] = FLinearColor(MeshData.VertexColors[VertIndex]);
 
-            // ÅºÁ¨Æ® ¼³Á¤
+            // íƒ„ì  íŠ¸ ì„¤ì •
             if (MeshData.Tangents.IsValidIndex(VertIndex))
             {
                 const FProcMeshTangent& Tangent = MeshData.Tangents[VertIndex];
@@ -136,14 +136,14 @@ UStaticMesh* ULIB_Export::ConvertProcToStaticMesh(FProcMeshData MeshData, const 
             VertexInstances.Add(InstanceID);
         }
 
-        // »ï°¢Çü »ı¼º
+        // ì‚¼ê°í˜• ìƒì„±
         if (VertexInstances.Num() == 3)
         {
             MeshDesc.CreateTriangle(Pgid, VertexInstances);
         }
     }
 
-    // 6. ¸Ş½Ã ºôµå ¼³Á¤
+    // 6. ë©”ì‹œ ë¹Œë“œ ì„¤ì •
     StaticMesh->CreateBodySetup();
     
     UStaticMesh::FBuildMeshDescriptionsParams BuildParams;
@@ -165,7 +165,7 @@ void ULIB_Export::ConvertProcToStaticMeshAsync(
     FOnStaticMeshResult OnResult
 )
 {
-    // °øÀ¯ ¸®¼Ò½º Á¢±ÙÀÌ³ª GC Ãæµ¹ ¹æÁö¸¦ À§ÇØ WeakObjectPtr°ú StaticMesh outer ¼³Á¤ º¯°æ
+    // ê³µìœ  ë¦¬ì†ŒìŠ¤ ì ‘ê·¼ì´ë‚˜ GC ì¶©ëŒ ë°©ì§€ë¥¼ ìœ„í•´ WeakObjectPtrê³¼ StaticMesh outer ì„¤ì • ë³€ê²½
     AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [MeshData = MoveTemp(MeshData), RecalculateNormal, OnProgress, OnResult]() mutable
         {
             float Progress = 0.0f;
@@ -251,19 +251,19 @@ void ULIB_Export::ConvertProcToStaticMeshAsync(
 
 void ULIB_Export::TakeScreenShot(const FString& FilePath, const FString& FileName, bool bCaptureUI, bool bAddSuffix, FString& FullFilePath)
 {
-    // ÇöÀç ³¯Â¥¿Í ½Ã°£À» ÆÄÀÏ ÀÌ¸§¿¡ Ãß°¡
+    // í˜„ì¬ ë‚ ì§œì™€ ì‹œê°„ì„ íŒŒì¼ ì´ë¦„ì— ì¶”ê°€
     FString CurrentDateTime = FDateTime::Now().ToString(TEXT("%Y%m%d_%H%M%S_"));
     FullFilePath = FilePath + "/" + CurrentDateTime + FileName;
 
-    // ½ºÅ©¸°¼¦ ¿äÃ»
+    // ìŠ¤í¬ë¦°ìƒ· ìš”ì²­
     FScreenshotRequest::RequestScreenshot(FullFilePath, bCaptureUI, false);
 
-    // ·»´õ¸µ ¸í·É ´ë±â
+    // ë Œë”ë§ ëª…ë ¹ ëŒ€ê¸°
     FlushRenderingCommands();
 }
 
 void ULIB_Export::ConvetFileToTexture(const FString& FullFilePath, UTexture2D*& OutTexture)
-{ // ÆÄÀÏÀÌ ÀúÀåµÇ¾ú´ÂÁö È®ÀÎ
+{ // íŒŒì¼ì´ ì €ì¥ë˜ì—ˆëŠ”ì§€ í™•ì¸
     if (!FPaths::FileExists(FullFilePath))
     {
         UE_LOG(LogTemp, Error, TEXT("Screenshot file was not saved: %s"), *FullFilePath);
@@ -271,11 +271,11 @@ void ULIB_Export::ConvetFileToTexture(const FString& FullFilePath, UTexture2D*& 
         return;
     }
 
-    // ÆÄÀÏ µ¥ÀÌÅÍ¸¦ ÀĞ¾î¿Í ÅØ½ºÃ³·Î º¯È¯
+    // íŒŒì¼ ë°ì´í„°ë¥¼ ì½ì–´ì™€ í…ìŠ¤ì²˜ë¡œ ë³€í™˜
     TArray<uint8> FileData;
     if (FFileHelper::LoadFileToArray(FileData, *FullFilePath))
     {
-        // ÀÌ¹ÌÁö µ¥ÀÌÅÍ¸¦ UTexture2D·Î º¯È¯
+        // ì´ë¯¸ì§€ ë°ì´í„°ë¥¼ UTexture2Dë¡œ ë³€í™˜
         IImageWrapperModule& ImageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
         TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::PNG);
 
@@ -284,7 +284,7 @@ void ULIB_Export::ConvetFileToTexture(const FString& FullFilePath, UTexture2D*& 
             TArray<uint8> RawData;
             if (ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, RawData))
             {
-                // ÅØ½ºÃ³ »ı¼º
+                // í…ìŠ¤ì²˜ ìƒì„±
                 OutTexture = UTexture2D::CreateTransient(
                     ImageWrapper->GetWidth(),
                     ImageWrapper->GetHeight(),
@@ -293,12 +293,12 @@ void ULIB_Export::ConvetFileToTexture(const FString& FullFilePath, UTexture2D*& 
 
                 if (OutTexture)
                 {
-                    // ÅØ½ºÃ³ µ¥ÀÌÅÍ ¼³Á¤
+                    // í…ìŠ¤ì²˜ ë°ì´í„° ì„¤ì •
                     void* TextureData = OutTexture->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
                     FMemory::Memcpy(TextureData, RawData.GetData(), RawData.Num());
                     OutTexture->GetPlatformData()->Mips[0].BulkData.Unlock();
 
-                    // ÅØ½ºÃ³ ¸®¼Ò½º ¾÷µ¥ÀÌÆ®
+                    // í…ìŠ¤ì²˜ ë¦¬ì†ŒìŠ¤ ì—…ë°ì´íŠ¸
                     OutTexture->UpdateResource();
                 }
             }
