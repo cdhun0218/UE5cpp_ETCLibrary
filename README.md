@@ -2,12 +2,15 @@
 It has been prepared as of 5.3
 
 1. LIB_Export
-  Unorganized code.
-  (I'd appreciate it if someone would organize it...)
-  
-  To collect the C++ code of additional features required by Unreal..
-  
-  Header and cpp renaming seem necessary
+   ::ConvertProcToStaticMeshAsync
+    A function that asynchronously converts a procedural mesh to a static mesh.
+  ::TakeScreenShot
+    Runtime screenshot
+  ::ConvetFileToTexture
+    Read image file and convert to Utexture2D
+
+   To do
+      1. transformation into plugin form
 
 2.CombineHangeulComp
   Library for entering Korean 3DKeyboard in Unreal
