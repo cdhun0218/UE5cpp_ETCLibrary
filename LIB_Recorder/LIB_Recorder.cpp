@@ -17,9 +17,9 @@
 TSharedPtr<FFrameWriter, ESPMode::ThreadSafe> ULIB_Recorder::FrameWriter = nullptr;
 FRunnableThread* ULIB_Recorder::WriterThread = nullptr;
 FThreadSafeCounter ULIB_Recorder::FrameCounter;
-FThreadSafeBool ULIB_Recorder::bIsProcessing = false; // [½Å±Ô] ÃÊ±âÈ­
+FThreadSafeBool ULIB_Recorder::bIsProcessing = false; // [ì‹ ê·œ] ì´ˆê¸°í™”
 
-// [¼º´É °³¼±] Á¤Àû º¯¼ö ÃÊ±âÈ­
+// [ì„±ëŠ¥ ê°œì„ ] ì •ì  ë³€ìˆ˜ ì´ˆê¸°í™”
 double ULIB_Recorder::LastCaptureTime = 0.0;
 float ULIB_Recorder::MinimumFrameDelay = 0.0f;
 
@@ -30,7 +30,7 @@ FFrameWriter::FFrameWriter()
     , WorkEvent(nullptr)
 {
     TempImageDirectory = FPaths::ProjectSavedDir() / TEXT("TempRecording");
-    // [°³¼±] ÀÌº¥Æ® »ı¼º
+    // [ê°œì„ ] ì´ë²¤íŠ¸ ìƒì„±
     WorkEvent = FPlatformProcess::GetSynchEventFromPool(false);
 }
 
@@ -58,13 +58,13 @@ uint32 FFrameWriter::Run()
 {
     while (bIsRunning)
     {
-        // Å¥¿¡ ÀÛ¾÷ÀÌ ÀÖ´ÂÁö È®ÀÎ
+        // íì— ì‘ì—…ì´ ìˆëŠ”ì§€ í™•ì¸
         if (!WriteQueue.IsEmpty())
         {
             FFrameWriteTask Task;
             if (WriteQueue.Dequeue(Task))
             {
-                // ÀÛ¾÷ Ã³¸® ½Ã Ä«¿îÅÍ °¨¼Ò
+                // ì‘ì—… ì²˜ë¦¬ ì‹œ ì¹´ìš´í„° ê°ì†Œ
                 QueueSizeCounter.Decrement();
 
                 FString FrameFilename = FString::Printf(TEXT("Frame_%05d.bmp"), Task.FrameNumber);
@@ -74,7 +74,7 @@ uint32 FFrameWriter::Run()
         }
         else
         {
-            // Å¥°¡ ºñ¾úÀ¸¸é ÀÌº¥Æ® ´ë±â (ÃÖ´ë 1ÃÊ ´ë±â ÈÄ ´Ù½Ã ·çÇÁ Ã¼Å©)
+            // íê°€ ë¹„ì—ˆìœ¼ë©´ ì´ë²¤íŠ¸ ëŒ€ê¸° (ìµœëŒ€ 1ì´ˆ ëŒ€ê¸° í›„ ë‹¤ì‹œ ë£¨í”„ ì²´í¬)
             if (WorkEvent)
             {
                 WorkEvent->Wait(1000);
@@ -86,7 +86,7 @@ uint32 FFrameWriter::Run()
         }
     }
 
-    // [°³¼±] Stop() È£Ãâ ÈÄ ³²Àº Å¥ Ã³¸® (ÀÜ¿© ÇÁ·¹ÀÓ ÀúÀå)
+    // [ê°œì„ ] Stop() í˜¸ì¶œ í›„ ë‚¨ì€ í ì²˜ë¦¬ (ì”ì—¬ í”„ë ˆì„ ì €ì¥)
     while (!WriteQueue.IsEmpty())
     {
         FFrameWriteTask Task;
@@ -105,7 +105,7 @@ uint32 FFrameWriter::Run()
 void FFrameWriter::Stop()
 {
     bIsRunning = false;
-    // ½º·¹µå°¡ Wait »óÅÂÀÏ ¼ö ÀÖÀ¸¹Ç·Î Áï½Ã ±ú¿ò
+    // ìŠ¤ë ˆë“œê°€ Wait ìƒíƒœì¼ ìˆ˜ ìˆìœ¼ë¯€ë¡œ ì¦‰ì‹œ ê¹¨ì›€
     if (WorkEvent)
     {
         WorkEvent->Trigger();
@@ -118,10 +118,10 @@ void FFrameWriter::Exit()
 
 bool FFrameWriter::EnqueueFrameToWrite(FFrameWriteTask Task)
 {
-    // [°³¼±] Å¥ Å©±â Á¦ÇÑ Ã¼Å©
+    // [ê°œì„ ] í í¬ê¸° ì œí•œ ì²´í¬
     if (QueueSizeCounter.GetValue() >= MaxQueueSize)
     {
-        // Å¥°¡ °¡µæ Ã¡À¸¸é ÇÁ·¹ÀÓ µå¶ø (¸Ş¸ğ¸® º¸È£)
+        // íê°€ ê°€ë“ ì°¼ìœ¼ë©´ í”„ë ˆì„ ë“œë (ë©”ëª¨ë¦¬ ë³´í˜¸)
         return false;
     }
 
@@ -149,14 +149,14 @@ bool FFrameWriter::IsQueueFull() const
 // -- BPL implementation --
 bool ULIB_Recorder::StartRecording_ThreadSafe(int32 CaptureFPS)
 {
-    // [½Å±Ô] Ã³¸® Áß(ÀÎÄÚµù Æ÷ÇÔ)ÀÌ¸é ½ÃÀÛ ºÒ°¡
+    // [ì‹ ê·œ] ì²˜ë¦¬ ì¤‘(ì¸ì½”ë”© í¬í•¨)ì´ë©´ ì‹œì‘ ë¶ˆê°€
     if (FrameWriter.IsValid() || bIsProcessing)
     {
         UE_LOG(LogTemp, Warning, TEXT("Already recording or processing."));
         return false;
     }
 
-    bIsProcessing = true; // Ã³¸® ½ÃÀÛ Ç¥½Ã
+    bIsProcessing = true; // ì²˜ë¦¬ ì‹œì‘ í‘œì‹œ
     FrameCounter.Reset();
     LastCaptureTime = 0.0;
 
@@ -180,7 +180,7 @@ bool ULIB_Recorder::StartRecording_ThreadSafe(int32 CaptureFPS)
 
     UE_LOG(LogTemp, Error, TEXT("Failed to create writer thread."));
     FrameWriter.Reset();
-    bIsProcessing = false; // ½ÇÆĞ ½Ã ÇÃ·¡±× ÇØÁ¦
+    bIsProcessing = false; // ì‹¤íŒ¨ ì‹œ í”Œë˜ê·¸ í•´ì œ
     return false;
 }
 
@@ -191,7 +191,7 @@ void ULIB_Recorder::CaptureFrame_ThreadSafe(UTextureRenderTarget2D* TargetRender
 
 void ULIB_Recorder::CaptureFrame_Cropped_ThreadSafe(UTextureRenderTarget2D* TargetRenderTarget, int32 LeftPixel, int32 TopPixel, int32 CropWidth, int32 CropHeight)
 {
-    // [°³¼±] Å¥ È®ÀÎ ¹× FPS Á¦ÇÑ
+    // [ê°œì„ ] í í™•ì¸ ë° FPS ì œí•œ
     if (!FrameWriter.IsValid() || FrameWriter->IsQueueFull())
     {
         return;
@@ -272,7 +272,7 @@ void ULIB_Recorder::CaptureFrame_Internal(UTextureRenderTarget2D* TargetRenderTa
 
 void ULIB_Recorder::StopRecording_AndEncode_ThreadSafe(FString FilePath, int32 FrameRate, FString FFMpegParams, const FOnRecordingEncodeComplete& OnComplete)
 {
-    // ³ìÈ­ ÁßÀÌ ¾Æ´Ï¸é ¸®ÅÏ
+    // ë…¹í™” ì¤‘ì´ ì•„ë‹ˆë©´ ë¦¬í„´
     if (!FrameWriter.IsValid())
     {
         UE_LOG(LogTemp, Warning, TEXT("Not currently recording."));
@@ -282,15 +282,15 @@ void ULIB_Recorder::StopRecording_AndEncode_ThreadSafe(FString FilePath, int32 F
 
     UE_LOG(LogTemp, Log, TEXT("Stopping recording... Handing over to background thread."));
 
-    // [ÇÙ½É º¯°æ] ºñµ¿±â Ã³¸®¸¦ À§ÇØ ·ÎÄÃ º¯¼ö¿¡ ½º·¹µå Æ÷ÀÎÅÍ º¹»ç
+    // [í•µì‹¬ ë³€ê²½] ë¹„ë™ê¸° ì²˜ë¦¬ë¥¼ ìœ„í•´ ë¡œì»¬ ë³€ìˆ˜ì— ìŠ¤ë ˆë“œ í¬ì¸í„° ë³µì‚¬
     TSharedPtr<FFrameWriter, ESPMode::ThreadSafe> WriterToStop = FrameWriter;
     FRunnableThread* ThreadToWaitFor = WriterThread;
 
-    // Áï½Ã Àü¿ª º¯¼ö¸¦ ÃÊ±âÈ­ÇÏ¿© Ãß°¡ Ä¸Ã³ ¹æÁö (bIsProcessingÀº À¯Áö)
+    // ì¦‰ì‹œ ì „ì—­ ë³€ìˆ˜ë¥¼ ì´ˆê¸°í™”í•˜ì—¬ ì¶”ê°€ ìº¡ì²˜ ë°©ì§€ (bIsProcessingì€ ìœ ì§€)
     FrameWriter.Reset();
     WriterThread = nullptr;
 
-    // ÆÄÀÏ °æ·Î ¹× ÀÎÀÚ ÁØºñ
+    // íŒŒì¼ ê²½ë¡œ ë° ì¸ì ì¤€ë¹„
     const FString TempImageDirectory = FPaths::ProjectSavedDir() / TEXT("TempRecording");
     const FString FFmpegPath = FPaths::ProjectContentDir() / TEXT("ffmpeg/ffmpeg.exe");
 
@@ -307,10 +307,10 @@ void ULIB_Recorder::StopRecording_AndEncode_ThreadSafe(FString FilePath, int32 F
         return;
     }
 
-    // [ÇÙ½É º¯°æ] ´ë±â ¹× ÀÎÄÚµù ·ÎÁ÷À» ¿ÏÀüÈ÷ ¹é±×¶ó¿îµå·Î ÀÌµ¿
+    // [í•µì‹¬ ë³€ê²½] ëŒ€ê¸° ë° ì¸ì½”ë”© ë¡œì§ì„ ì™„ì „íˆ ë°±ê·¸ë¼ìš´ë“œë¡œ ì´ë™
     AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [WriterToStop, ThreadToWaitFor, FFmpegPath, FrameRate, TempImageDirectory, FilePath, FFMpegParams, OnComplete]()
         {
-            // 1. ½º·¹µå Á¾·á ¹× ´ë±â (Game Thread°¡ ¾Æ´Ñ ¿©±â¼­ ´ë±âÇÏ¹Ç·Î ÇÁ¸®Â¡ ¾øÀ½)
+            // 1. ìŠ¤ë ˆë“œ ì¢…ë£Œ ë° ëŒ€ê¸° (Game Threadê°€ ì•„ë‹Œ ì—¬ê¸°ì„œ ëŒ€ê¸°í•˜ë¯€ë¡œ í”„ë¦¬ì§• ì—†ìŒ)
             if (WriterToStop.IsValid())
             {
                 WriterToStop->Stop();
@@ -318,11 +318,11 @@ void ULIB_Recorder::StopRecording_AndEncode_ThreadSafe(FString FilePath, int32 F
 
             if (ThreadToWaitFor)
             {
-                ThreadToWaitFor->WaitForCompletion(); // ÀÜ¿© ÆÄÀÏ ¾²±â ´ë±â
+                ThreadToWaitFor->WaitForCompletion(); // ì”ì—¬ íŒŒì¼ ì“°ê¸° ëŒ€ê¸°
                 delete ThreadToWaitFor;
             }
 
-            // 2. FFmpeg ÀÎÄÚµù ¼öÇà
+            // 2. FFmpeg ì¸ì½”ë”© ìˆ˜í–‰
             FString UserParams = FFMpegParams;
             if (UserParams.IsEmpty())
             {
@@ -352,14 +352,14 @@ void ULIB_Recorder::StopRecording_AndEncode_ThreadSafe(FString FilePath, int32 F
                 UE_LOG(LogTemp, Error, TEXT("Failed to launch FFmpeg process."));
             }
 
-            // 3. ÀÓ½Ã ÆÄÀÏ »èÁ¦
+            // 3. ì„ì‹œ íŒŒì¼ ì‚­ì œ
             IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
             PlatformFile.DeleteDirectoryRecursively(*TempImageDirectory);
 
-            // 4. ¿Ï·á ¾Ë¸² (Game Thread·Î º¹±Í)
+            // 4. ì™„ë£Œ ì•Œë¦¼ (Game Threadë¡œ ë³µê·€)
             AsyncTask(ENamedThreads::GameThread, [OnComplete, bSuccess, FilePath]()
                 {
-                    // ¸ğµç Ã³¸®°¡ ³¡³µÀ¸¹Ç·Î ÇÃ·¡±× ÇØÁ¦
+                    // ëª¨ë“  ì²˜ë¦¬ê°€ ëë‚¬ìœ¼ë¯€ë¡œ í”Œë˜ê·¸ í•´ì œ
                     bIsProcessing = false;
 
                     if (bSuccess)
